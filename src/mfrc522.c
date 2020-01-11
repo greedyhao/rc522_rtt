@@ -1,14 +1,17 @@
 #include "mfrc522.h"
 #include <string.h>
 
+#define PIN_NUM_MAX     255
+#define MSG_BUF_MAX 	50U
+
+static Uid uid;								// Used by PICC_ReadCardSerial().
 static rt_base_t _chipSelectPin, _resetPowerDownPin;
 
-#define PIN_NUM_MAX     255
-
 static struct rt_spi_device *spi_dev_rc522;     /* SPI 设备句柄 */
-static Uid uid;								// Used by PICC_ReadCardSerial().
 static char *msg;
-#define MSG_BUF_MAX 50U
+static rt_timer_t tim_rc522;
+static char flag_500ms = 0;
+static void timerout(void *param);
 
 //
 // Functions for setting up the MFRC522
@@ -169,9 +172,9 @@ void PCD_Init(void)
 
 	// RTT code
 	msg = (char *)rt_malloc((MSG_BUF_MAX+1)*sizeof(char));
+	tim_rc522 = rt_timer_create("tim-rc522", timerout, RT_NULL, RT_TICK_PER_SECOND/2, RT_TIMER_FLAG_ONE_SHOT);
 
     // Set the chipSelectPin as digital output, do not select the slave yet
-    // rt_pin_mode(_chipSelectPin, PIN_MODE_OUTPUT);
     rt_pin_write(_chipSelectPin, PIN_HIGH);
 
     // If a valid pin number has been set, pull device out of power down / reset state.
@@ -355,6 +358,36 @@ bool PCD_PerformSelfTest(void)
 	// Test passed; all is good.
 	return true;
 } // End PCD_PerformSelfTest()
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Power control
+/////////////////////////////////////////////////////////////////////////////////////
+
+//IMPORTANT NOTE!!!!
+//Calling any other function that uses CommandReg will disable soft power down mode !!!
+//For more details about power control, refer to the datasheet - page 33 (8.6)
+
+void PCD_SoftPowerDown(void){//Note : Only soft power down mode is available throught software
+	byte val = PCD_ReadReg_Byte(CommandReg); // Read state of the command register 
+	val |= (1<<4);// set PowerDown bit ( bit 4 ) to 1 
+	PCD_WriteReg_Byte(CommandReg, val);//write new value to the command register
+}
+
+void PCD_SoftPowerUp(void){
+	byte val = PCD_ReadReg_Byte(CommandReg); // Read state of the command register 
+	val &= ~(1<<4);// set PowerDown bit ( bit 4 ) to 0 
+	PCD_WriteReg_Byte(CommandReg, val);//write new value to the command register
+	// wait until PowerDown bit is cleared (this indicates end of wake up procedure)
+	rt_timer_start(tim_rc522);
+
+	while(flag_500ms != 1){ // set timeout to 500 ms 
+		val = PCD_ReadReg_Byte(CommandReg);// Read state of the command register
+		if(!(val & (1<<4))){ // if powerdown bit is 0 
+			flag_500ms = 0;
+			break;// wake up procedure is finished 
+		}
+	}
+}
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Functions for communicating with PICCs
@@ -1889,4 +1922,9 @@ Uid *get_uid(void) {
 void PCD_End(void) {
 	if (msg != RT_NULL)
 		rt_free(msg);
+}
+
+static void timerout(void *param)
+{
+	flag_500ms = 1;
 }
