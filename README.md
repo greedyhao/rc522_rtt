@@ -1,4 +1,40 @@
-移植自 Arduino 的 [RFID 库](https://github.com/miguelbalboa/rfid)，原作者是 [miguelbalboa](https://github.com/miguelbalboa)
+# RC522
+## 介绍
+
+本项目移植自 Arduino 的 [RFID 库](https://github.com/miguelbalboa/rfid)，原作者是 [miguelbalboa](https://github.com/miguelbalboa)
+
+### 目录结构
+
+| 名称     | 说明                         |
+| -------- | ---------------------------- |
+| docs     | 文档目录                     |
+| examples | 例子目录，并有相应的一些说明 |
+| inc      | 头文件目录                   |
+| src      | 源代码目录                   |
+| port     | 移植代码目录。               |
+
+### 许可证
+
+rc522 package 遵循 Apache license v2.0 许可，详见 `LICENSE` 文件。
+
+### 依赖
+
+- RT-Thread 3.0+
+- RT-Thread 4.0+
+
+## 如何打开 rc522
+
+使用 hello package 需要在 RT-Thread 的包管理器中选择它，具体路径如下：
+
+```
+RT-Thread online packages
+    peripheral libraries and drivers --->
+        [*] rc522: rfid module driver
+```
+
+然后让 RT-Thread 的包管理器自动更新，或者使用 pkgs --update 命令更新包到 BSP 中。
+
+## 示例运行
 
 ```
  \ | /
@@ -80,3 +116,9 @@ Sector Block   0  1  2  3   4  5  6  7   8  9 10 11  12 13 14 15  AccessBits
           1   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00  [ 0 0 0 ]
           0   b6 ab 1b 07  01 08 04 00  62 63 64 65  66 67 68 69  [ 0 0 0 ]
 ```
+
+## 联系方式
+
++ 维护：greedyhao
++ 主页：<https://github.com/greedyhao>
++ 邮箱：<hao_kr@163.com>
