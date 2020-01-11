@@ -37,18 +37,16 @@ void read_nuid() {
 	rt_kprintf("This code scan the MIFARE Classsic NUID.\n");
 	rt_kprintf("Using the following key:");
 	printHex(key.keyByte, MF_KEY_SIZE);
+	rt_kprintf("\n");
 
 	while (1)
 	{
-		rt_thread_mdelay(500);
-
-		// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-		if ( ! PICC_IsNewCardPresent())
+		// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle. And if present, select one.
+		if ( ! PICC_IsNewCardPresent() || ! PICC_ReadCardSerial())
+		{
+			rt_thread_mdelay(50);
 			continue;
-
-		// Verify if the NUID has been readed
-		if ( ! PICC_ReadCardSerial())
-			continue;
+		}
 
 		rt_kprintf("PICC type: ");
 		enum PICC_Type piccType = PICC_GetType(uid->sak);

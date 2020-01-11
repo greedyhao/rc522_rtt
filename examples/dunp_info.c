@@ -36,15 +36,12 @@ void dump_info() {
 	{
         rt_thread_mdelay(500);
 
-        // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-        if ( ! PICC_IsNewCardPresent()) {
-            continue;
-        }
-
-        // Select one of the cards
-        if ( ! PICC_ReadCardSerial()) {
-            continue;
-        }
+        // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle. And if present, select one.
+		if ( ! PICC_IsNewCardPresent() || ! PICC_ReadCardSerial())
+		{
+			rt_thread_mdelay(50);
+			continue;
+		}
 
         // Dump debug info about the card; PICC_HaltA() is automatically called
 	    PICC_DumpToSerial(uid);
