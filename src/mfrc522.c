@@ -32,8 +32,10 @@ void MFRC522(rt_base_t chipSelectPin, rt_base_t resetPowerDownPin)
 void PCD_WriteReg_Byte(enum PCD_Register reg, byte value)
 {
 	rt_pin_write(_chipSelectPin, PIN_LOW);			// Select slave
-	rt_spi_send(spi_dev_rc522, (void *)&reg, 1);	// MSB == 0 is for writing. LSB is not used in address. Datasheet section 8.1.2.3.
-	rt_spi_send(spi_dev_rc522, (void *)&value, 1);	
+	byte tmp[2];
+	tmp[0] = (byte)reg;								// MSB == 0 is for writing. LSB is not used in address. Datasheet section 8.1.2.3.
+	tmp[1] = value;
+	rt_spi_send(spi_dev_rc522, (void *)tmp, 2);
 	rt_pin_write(_chipSelectPin, PIN_HIGH);			// Release slave again
 } // End PCD_WriteReg_Byte()
 
@@ -43,8 +45,7 @@ void PCD_WriteReg_Byte(enum PCD_Register reg, byte value)
  */
 void PCD_WriteRegister(enum PCD_Register reg, byte count, byte *values)
 {
-	byte tmp = 0;
-	tmp = (byte)reg;
+	byte tmp = (byte)reg;
 	rt_pin_write(_chipSelectPin, PIN_LOW);		// Select slave
 	rt_spi_send(spi_dev_rc522, &tmp, 1);		// MSB == 0 is for writing. LSB is not used in address. Datasheet section 8.1.2.3.
 	rt_spi_send(spi_dev_rc522, values, count);
@@ -59,12 +60,12 @@ byte PCD_ReadReg_Byte(enum PCD_Register reg)
 {
 	byte value = 0;
 	rt_pin_write(_chipSelectPin, PIN_LOW);			// Select slave
-	byte address = 0x80 | reg;			// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
-	rt_spi_send(spi_dev_rc522, &address, 1);					
+	byte address = (byte)(0x80 | reg);			// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
+	rt_spi_send(spi_dev_rc522, &address, 1);
 	rt_spi_recv(spi_dev_rc522, &value, 1);	// Read the value back. Send 0 to stop reading.
 	rt_pin_write(_chipSelectPin, PIN_HIGH);			// Release slave again
 	return value;
-}
+} // End PCD_ReadReg_Byte()
 
 /**
  * Reads a number of bytes from the specified register in the MFRC522 chip.
@@ -75,7 +76,7 @@ void PCD_ReadRegister(enum PCD_Register reg, byte count, byte *values, byte rxAl
 	if (count == 0) {
 		return;
 	}
-	byte address = 0x80 | reg;				// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
+	byte address = (byte)(0x80 | reg);				// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
 	byte index = 0;							// Index in values array.
 	rt_pin_write(_chipSelectPin, PIN_LOW);
 	count--;								// One read is performed outside of the loop
@@ -90,15 +91,21 @@ void PCD_ReadRegister(enum PCD_Register reg, byte count, byte *values, byte rxAl
 		values[0] = (values[0] & ~mask) | (value & mask);
 		index++;
 	}
-	while (index < count) {
+	rt_spi_recv(spi_dev_rc522, &values[index], 1);
+	index++;
+	while (index <= count) {
 		rt_spi_send_then_recv(spi_dev_rc522, &address, 1, &values[index], 1);	// Read value and tell that we want to read the same address again.
 		index++;
 	}
-	address = 0;			
-	rt_spi_recv(spi_dev_rc522, &values[index], 1); // Read the final byte. Send 0 to stop reading.
+	address = 0;
+	byte tmp = 0;
+	rt_spi_recv(spi_dev_rc522, &tmp, 1); // Read the final byte. Send 0 to stop reading.
 	rt_pin_write(_chipSelectPin, PIN_HIGH);			// Release slave again
 } // End PCD_ReadRegister()
 
+/**
+ * Sets the bits given in mask in register reg.
+ */
 void PCD_SetRegisterBitMask(enum PCD_Register reg, byte mask)
 {
 	byte tmp = 0;
@@ -106,6 +113,9 @@ void PCD_SetRegisterBitMask(enum PCD_Register reg, byte mask)
 	PCD_WriteReg_Byte(reg, tmp | mask);			// set bit mask
 }
 
+/**
+ * Clears the bits given in mask from register reg.
+ */
 void PCD_ClearRegisterBitMask(enum PCD_Register reg, byte mask)
 {
 	byte tmp = 0;
@@ -113,6 +123,11 @@ void PCD_ClearRegisterBitMask(enum PCD_Register reg, byte mask)
 	PCD_WriteReg_Byte(reg, tmp & (~mask));		// clear bit mask
 }
 
+/**
+ * Use the CRC coprocessor in the MFRC522 to calculate a CRC_A.
+ * 
+ * @return STATUS_OK on success, STATUS_??? otherwise.
+ */
 enum StatusCode PCD_CalculateCRC(byte *data, byte length, byte *result)
 {
 	PCD_WriteReg_Byte(CommandReg, PCD_Idle);			// Stop any active command.
@@ -148,16 +163,15 @@ enum StatusCode PCD_CalculateCRC(byte *data, byte length, byte *result)
 /**
  * Initializes the MFRC522 chip.
  */
-void PCD_Init()
+void PCD_Init(void)
 {
     bool hardReset = false;
 
 	// RTT code
-	if (msg == RT_NULL)
-		msg = (char *)rt_malloc((MSG_BUF_MAX+1)*sizeof(char));
+	msg = (char *)rt_malloc((MSG_BUF_MAX+1)*sizeof(char));
 
     // Set the chipSelectPin as digital output, do not select the slave yet
-    rt_pin_mode(_chipSelectPin, PIN_MODE_OUTPUT);
+    // rt_pin_mode(_chipSelectPin, PIN_MODE_OUTPUT);
     rt_pin_write(_chipSelectPin, PIN_HIGH);
 
     // If a valid pin number has been set, pull device out of power down / reset state.
@@ -280,7 +294,7 @@ bool PCD_PerformSelfTest(void)
 
 	// 3. Enable self-test
 	PCD_WriteReg_Byte(AutoTestReg, 0x09);
-	
+
 	// 4. Write 00h to FIFO buffer
 	PCD_WriteReg_Byte(FIFODataReg, 0x00);
 
@@ -384,7 +398,7 @@ enum StatusCode PCD_CommunicateWithPICC(	byte command,		///< The command to exec
 	byte txLastBits = validBits ? *validBits : 0;
 	byte bitFraming = (rxAlign << 4) + txLastBits;		// RxAlign = BitFramingReg[6..4]. TxLastBits = BitFramingReg[2..0]
 
-	PCD_WriteReg_Byte(CommandReg, PCD_Idle);				// Stop any active command.
+	PCD_WriteReg_Byte(CommandReg, PCD_Idle);			// Stop any active command.
 	PCD_WriteReg_Byte(ComIrqReg, 0x7F);					// Clear all seven interrupt request bits
 	PCD_WriteReg_Byte(FIFOLevelReg, 0x80);				// FlushBuffer = 1, FIFO initialization
 	PCD_WriteRegister(FIFODataReg, sendLen, sendData);	// Write sendData to the FIFO
@@ -405,7 +419,8 @@ enum StatusCode PCD_CommunicateWithPICC(	byte command,		///< The command to exec
 			break;
 		}
 		if (n & 0x01) {						// Timer interrupt - nothing received in 25ms
-			return STATUS_TIMEOUT;
+		PCD_WriteReg_Byte(ComIrqReg, 0x7F);
+			// return STATUS_TIMEOUT;
 		}
 	}
 	// 35.7ms and nothing happend. Communication with the MFRC522 might be down.
@@ -574,7 +589,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 	//		10 bytes		1			CT		uid0	uid1	uid2
 	//						2			CT		uid3	uid4	uid5
 	//						3			uid6	uid7	uid8	uid9
-	
+
 	// Sanity checks
 	if (validBits > 80) {
 		return STATUS_INVALID;
@@ -591,25 +606,25 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 			case 1:
 				buffer[0] = PICC_CMD_SEL_CL1;
 				uidIndex = 0;
-				useCascadeTag = validBits && uid->size > 4;	// When we know that the UID has more than 4 bytes
+				useCascadeTag = validBits && (uid->size > 4);	// When we know that the UID has more than 4 bytes
 				break;
-			
+
 			case 2:
 				buffer[0] = PICC_CMD_SEL_CL2;
 				uidIndex = 3;
-				useCascadeTag = validBits && uid->size > 7;	// When we know that the UID has more than 7 bytes
+				useCascadeTag = validBits && (uid->size > 7);	// When we know that the UID has more than 7 bytes
 				break;
-			
+
 			case 3:
 				buffer[0] = PICC_CMD_SEL_CL3;
 				uidIndex = 6;
 				useCascadeTag = false;						// Never used in CL3.
 				break;
-			
+
 			default:
 				return STATUS_INTERNAL_ERROR;
 		}
-		
+
 		// How many UID bits are known in this Cascade Level?
 		currentLevelKnownBits = validBits - (8 * uidIndex);
 		if (currentLevelKnownBits < 0) {
@@ -634,13 +649,13 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 		if (useCascadeTag) {
 			currentLevelKnownBits += 8;
 		}
-		
+
 		// Repeat anti collision loop until we can transmit all UID bits + BCC and receive a SAK - max 32 iterations.
 		selectDone = false;
 		while (!selectDone) {
 			// Find out how many bits and bytes to send and receive.
 			if (currentLevelKnownBits >= 32) { // All UID bits in this Cascade Level are known. This is a SELECT.
-				//Serial.print(F("SELECT: currentLevelKnownBits=")); Serial.println(currentLevelKnownBits, DEC);
+				rt_kprintf("SELECT: currentLevelKnownBits=%d\n", currentLevelKnownBits);
 				buffer[1] = 0x70; // NVB - Number of Valid Bits: Seven whole bytes
 				// Calculate BCC - Block Check Character
 				buffer[6] = buffer[2] ^ buffer[3] ^ buffer[4] ^ buffer[5];
@@ -656,7 +671,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 				responseLength	= 3;
 			}
 			else { // This is an ANTICOLLISION.
-				//Serial.print(F("ANTICOLLISION: currentLevelKnownBits=")); Serial.println(currentLevelKnownBits, DEC);
+				rt_kprintf("ANTICOLLISION: currentLevelKnownBits=%d\n", currentLevelKnownBits);
 				txLastBits		= currentLevelKnownBits % 8;
 				count			= currentLevelKnownBits / 8;	// Number of whole bytes in the UID part.
 				index			= 2 + count;					// Number of whole bytes: SEL + NVB + UIDs
@@ -666,7 +681,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 				responseBuffer	= &buffer[index];
 				responseLength	= sizeof(buffer) - index;
 			}
-			
+
 			// Set bit adjustments
 			rxAlign = txLastBits;											// Having a separate variable is overkill. But it makes the next line easier to read.s
 			PCD_WriteReg_Byte(BitFramingReg, (rxAlign << 4) + txLastBits);	// RxAlign = BitFramingReg[6..4]. TxLastBits = BitFramingReg[2..0]
@@ -707,7 +722,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 				}
 			}
 		} // End of while (!selectDone)
-		
+
 		// We do not check the CBB - it was constructed by us above.
 		
 		// Copy the found UID bytes from buffer[] to uid->uidByte[]
@@ -716,7 +731,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 		for (count = 0; count < bytesToCopy; count++) {
 			uid->uidByte[uidIndex + count] = buffer[index++];
 		}
-		
+
 		// Check response SAK (Select Acknowledge)
 		if (responseLength != 3 || txLastBits != 0) { // SAK must be exactly 24 bits (1 byte + CRC_A).
 			return STATUS_ERROR;
@@ -737,7 +752,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 			uid->sak = responseBuffer[0];
 		}
 	} // End of while (!uidComplete)
-	
+
 	// Set correct uid->size
 	uid->size = 3 * cascadeLevel + 1;
 
@@ -1281,6 +1296,7 @@ void PCD_DumpVersionToSerial(void) {
 		case 0x12: rt_kprintf(" = counterfeit chip");     break;
 		default:   rt_kprintf(" = (unknown)");
 	}
+	rt_kprintf("\n");
 	// When 0x00 or 0xFF is returned, communication probably failed
 	if ((v == 0x00) || (v == 0xFF))
 		rt_kprintf("WARNING: Communication failure, is the MFRC522 properly connected?\n");
@@ -1357,7 +1373,7 @@ void PICC_DumpDetailsToSerial(Uid *uid	///< Pointer to Uid struct returned from 
 	rt_kprintf("Card SAK: ");
 	if(uid->sak < 0x10)
 		rt_kprintf("0");
-	rt_kprintf("%x", uid->sak);
+	rt_kprintf("%x ", uid->sak);
 
 	// (suggested) PICC type
 	enum PICC_Type piccType = PICC_GetType(uid->sak);
@@ -1826,7 +1842,7 @@ bool MIFARE_UnbrickUidSector(bool logErrors) {
  * @return bool
  */
 bool PICC_IsNewCardPresent() {
-	byte bufferATQA[2];
+	byte bufferATQA[2] = {0};
 	byte bufferSize = sizeof(bufferATQA);
 
 	// Reset baud rates
@@ -1836,6 +1852,7 @@ bool PICC_IsNewCardPresent() {
 	PCD_WriteReg_Byte(ModWidthReg, 0x26);
 
 	enum StatusCode result = PICC_RequestA(bufferATQA, &bufferSize);
+	rt_thread_mdelay(1);	// PICC_IsNewCardPresent() will always failed without this delay!
 	return (result == STATUS_OK || result == STATUS_COLLISION);
 } // End PICC_IsNewCardPresent()
 

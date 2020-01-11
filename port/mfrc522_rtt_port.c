@@ -1,16 +1,23 @@
 #include "mfrc522.h"
 
 static struct rt_spi_device mfrc522_spi_dev;
+struct rt_hw_spi_cs
+{
+    rt_uint32_t pin;
+};
+static struct rt_hw_spi_cs spi_cs; 
 
 static int rt_hw_spi_rc522_init()
 {
     rt_err_t res = RT_EOK;
 
     // Attach Device
-    res = rt_spi_bus_attach_device(&mfrc522_spi_dev, MFRC522_SPI_DEVICE_NAME, MFRC522_SPI_BUS_NAME, RT_NULL);
+    spi_cs.pin = MFRC522_SS_PIN;
+    rt_pin_mode(spi_cs.pin, PIN_MODE_OUTPUT);
+    res = rt_spi_bus_attach_device(&mfrc522_spi_dev, MFRC522_SPI_DEVICE_NAME, MFRC522_SPI_BUS_NAME, (void*)&spi_cs);
     if (res != RT_EOK)
     {
-        rt_kprintf("[u8g2] Failed to attach device %s\n", MFRC522_SPI_DEVICE_NAME);
+        rt_kprintf("[RC522] Failed to attach device %s\n", MFRC522_SPI_DEVICE_NAME);
         return res;
     }
 

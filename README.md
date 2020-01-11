@@ -1,3 +1,5 @@
+移植自 Arduino 的 [RFID 库](https://github.com/miguelbalboa/rfid)，原作者是 [miguelbalboa](https://github.com/miguelbalboa)
+
 ```
  \ | /
 - RT -     Thread Operating System

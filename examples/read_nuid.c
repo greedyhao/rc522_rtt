@@ -54,6 +54,8 @@ void read_nuid() {
 
 	while (1)
 	{
+		rt_thread_mdelay(500);
+
 		// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
 		if ( ! PICC_IsNewCardPresent())
 			continue;
@@ -100,8 +102,7 @@ void read_nuid() {
 
 		// Stop encryption on PCD
 		PCD_StopCrypto1();
-
-		rt_thread_mdelay(500);
+		break;
 	}
 
 	PCD_End();
