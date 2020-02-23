@@ -1,6 +1,10 @@
 #include "mfrc522.h"
 #include <string.h>
 
+#define DBG_TAG              "rc522.src"
+#define DBG_LVL              DBG_INFO
+#include <rtdbg.h>
+
 #define PIN_NUM_MAX     255
 #define MSG_BUF_MAX 	50U
 
@@ -688,7 +692,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 		while (!selectDone) {
 			// Find out how many bits and bytes to send and receive.
 			if (currentLevelKnownBits >= 32) { // All UID bits in this Cascade Level are known. This is a SELECT.
-				rt_kprintf("SELECT: currentLevelKnownBits=%d\n", currentLevelKnownBits);
+				LOG_D("SELECT: currentLevelKnownBits=%d", currentLevelKnownBits);
 				buffer[1] = 0x70; // NVB - Number of Valid Bits: Seven whole bytes
 				// Calculate BCC - Block Check Character
 				buffer[6] = buffer[2] ^ buffer[3] ^ buffer[4] ^ buffer[5];
@@ -704,7 +708,7 @@ enum StatusCode PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally ou
 				responseLength	= 3;
 			}
 			else { // This is an ANTICOLLISION.
-				rt_kprintf("ANTICOLLISION: currentLevelKnownBits=%d\n", currentLevelKnownBits);
+				LOG_D("ANTICOLLISION: currentLevelKnownBits=%d", currentLevelKnownBits);
 				txLastBits		= currentLevelKnownBits % 8;
 				count			= currentLevelKnownBits / 8;	// Number of whole bytes in the UID part.
 				index			= 2 + count;					// Number of whole bytes: SEL + NVB + UIDs
