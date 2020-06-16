@@ -32,6 +32,8 @@ RT-Thread online packages
         [*] rc522: rfid module driver
 ```
 
+开启了软件包之后，一般还需要配置使用的 SPI 口和使用的 RST 与 INT 管脚
+
 然后让 RT-Thread 的包管理器自动更新，或者使用 pkgs --update 命令更新包到 BSP 中。
 
 ## 示例运行
