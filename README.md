@@ -3,6 +3,10 @@
 
 本项目移植自 Arduino 的 [RFID 库](https://github.com/miguelbalboa/rfid)，原作者是 [miguelbalboa](https://github.com/miguelbalboa)
 
+看到挺多人反馈说遇到有问题，这里建了个 QQ 群进行讨论，群号：903777596
+
+![](/img/qr_code_qq.png)
+
 ### 目录结构
 
 | 名称     | 说明                         |
