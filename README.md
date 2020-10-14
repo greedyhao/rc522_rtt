@@ -3,7 +3,7 @@
 
 本项目移植自 Arduino 的 [RFID 库](https://github.com/miguelbalboa/rfid)，原作者是 [miguelbalboa](https://github.com/miguelbalboa)
 
-看到挺多人反馈说遇到有问题，这里建了个 QQ 群进行讨论，群号：903777596
+看到挺多人反馈说遇到有问题，有问题的都注意一下你的管脚号配置对了没，要用你 pin_index 中的管脚号，而不是你 MCU 的管脚号；另外这里建了个 QQ 群进行讨论，群号：903777596
 
 ![](/img/qr_code_qq.png)
 
@@ -37,6 +37,10 @@ RT-Thread online packages
 ```
 
 开启了软件包之后，一般还需要配置使用的 SPI 口和使用的 RST 与 INT 管脚
+
+这里的管脚需要按照 gpio 注册时的管脚号，比如 stm32 的管脚如下图，PA0 对应 0 脚，PB0 对应 16 脚等等，以此类推
+
+![](/img/pin_index.png)
 
 然后让 RT-Thread 的包管理器自动更新，或者使用 pkgs --update 命令更新包到 BSP 中。
 
