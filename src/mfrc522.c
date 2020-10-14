@@ -1251,7 +1251,7 @@ const char *GetStatusCodeName(enum StatusCode code	///< One of the StatusCode en
 	switch (code) {
 		case STATUS_OK:				strncpy(msg, "Success.", MSG_BUF_MAX);
 		case STATUS_ERROR:			strncpy(msg, "Error in communication.", MSG_BUF_MAX);
-		case STATUS_COLLISION:		strncpy(msg, "Collission detected.", MSG_BUF_MAX);
+		case STATUS_COLLISION:		strncpy(msg, "Collision detected.", MSG_BUF_MAX);
 		case STATUS_TIMEOUT:		strncpy(msg, "Timeout in communication.", MSG_BUF_MAX);
 		case STATUS_NO_ROOM:		strncpy(msg, "A buffer is not big enough.", MSG_BUF_MAX);
 		case STATUS_INTERNAL_ERROR:	strncpy(msg, "Internal error in the code. Should not happen.", MSG_BUF_MAX);
