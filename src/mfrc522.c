@@ -1343,8 +1343,6 @@ void PCD_DumpVersionToSerial(void) {
  * Dumps debug info about the selected PICC to Serial.
  * On success the PICC is halted after dumping the data.
  * For MIFARE Classic the factory default key of 0xFFFFFFFFFFFF is tried.  
- *
- * @DEPRECATED Kept for bakward compatibility
  */
 void PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned from a successful PICC_Select().
 								) {
@@ -1390,8 +1388,6 @@ void PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned from a succe
 
 /**
  * Dumps card info (UID,SAK,Type) about the selected PICC to Serial.
- *
- * @DEPRECATED kept for backward compatibility
  */
 void PICC_DumpDetailsToSerial(Uid *uid	///< Pointer to Uid struct returned from a successful PICC_Select().
 									) {
