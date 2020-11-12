@@ -17,6 +17,70 @@ static rt_timer_t tim_rc522;
 static char flag_500ms = 0;
 static void timerout(void *param);
 
+/* 本软件包原先没有考虑到 rt_spi_send, rt_spi_recv, rt_spi_send_then_recv
+ * 这些函数在传输数据前会先获取(take)CS，将CS设为有效状态；传输完成后会释放(release)CS，将CS设为失效状态。
+ * 因此此处为了兼容原有代码，写了3个相应 no take no release 发送接收函数，并用宏替代了原本的发送接收函数。 */
+#define rt_spi_send mfrc522_spi_send_no_take_no_release
+#define rt_spi_recv mfrc522_spi_recv_no_take_no_release
+#define rt_spi_send_then_recv mfrc522_spi_send_then_recv_no_take_no_release
+
+rt_inline void mfrc522_spi_send_no_take_no_release(struct rt_spi_device *device,
+                                                const void           *send_buf,
+                                                rt_size_t             length)
+{
+    struct rt_spi_message msg;
+
+    msg.send_buf   = send_buf;
+    msg.recv_buf   = RT_NULL;
+    msg.length     = length;
+    msg.cs_take    = 0;
+    msg.cs_release = 0;
+    msg.next       = RT_NULL;
+
+    rt_spi_transfer_message(device, &msg);
+}
+
+rt_inline void mfrc522_spi_recv_no_take_no_release(struct rt_spi_device *device,
+                                                void           *recv_buf,
+                                                rt_size_t             length)
+{
+    struct rt_spi_message msg;
+
+    msg.send_buf   = RT_NULL;
+    msg.recv_buf   = recv_buf;
+    msg.length     = length;
+    msg.cs_take    = 0;
+    msg.cs_release = 0;
+    msg.next       = RT_NULL;
+
+    rt_spi_transfer_message(device, &msg);
+}
+
+rt_inline void mfrc522_spi_send_then_recv_no_take_no_release(struct rt_spi_device *device,
+                                                            const void           *send_buf,
+                                                            rt_size_t             send_length,
+                                                            void                 *recv_buf,
+                                                            rt_size_t             recv_length)
+{
+    struct rt_spi_message msg1, msg2;
+
+    msg1.send_buf   = send_buf;
+    msg1.recv_buf   = RT_NULL;
+    msg1.length     = send_length;
+    msg1.cs_take    = 0;
+    msg1.cs_release = 0;
+    msg1.next       = &msg2;
+
+    msg2.send_buf   = RT_NULL;
+    msg2.recv_buf   = recv_buf;
+    msg2.length     = recv_length;
+    msg2.cs_take    = 0;
+    msg2.cs_release = 0;
+    msg2.next       = RT_NULL;
+
+    rt_spi_transfer_message(device, &msg1);
+}
+
 //
 // Functions for setting up the MFRC522
 //
@@ -26,6 +90,7 @@ void MFRC522(rt_base_t chipSelectPin, rt_base_t resetPowerDownPin)
     _chipSelectPin = chipSelectPin;
     _resetPowerDownPin = resetPowerDownPin;
 	spi_dev_rc522 = (struct rt_spi_device *)rt_device_find(MFRC522_SPI_DEVICE_NAME);
+	RT_ASSERT(spi_dev_rc522);
 }
 
 //
