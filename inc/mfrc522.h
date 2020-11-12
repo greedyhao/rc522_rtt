@@ -12,7 +12,7 @@
 
 #include <rtthread.h>
 #include <rtdevice.h>
-#include <drv_gpio.h>
+#include <drv_common.h>
 
 #ifndef MFRC522_SPI_DEVICE_NAME
 #define MFRC522_SPI_DEVICE_NAME "spi10"
