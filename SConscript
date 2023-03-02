@@ -6,7 +6,7 @@ import rtconfig
 cwd = GetCurrentDir()
 
 src  = Glob('src/*.c')
-src  += Glob('port/*.c')
+src  += Glob('port/mfrc522_rtt_port.c')
 inc = [cwd]
 inc += [cwd + '/inc']
 

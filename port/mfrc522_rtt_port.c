@@ -32,5 +32,4 @@ static int rt_hw_spi_rc522_init()
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-//INIT_COMPONENT_EXPORT(rt_hw_spi_rc522_init); 
-//先屏蔽了，有空验证下 mfrc522_rtt_stm32_port.c 中的是否可以在我的板子上正常运行
+INIT_COMPONENT_EXPORT(rt_hw_spi_rc522_init); 
