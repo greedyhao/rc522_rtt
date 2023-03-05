@@ -1821,7 +1821,7 @@ bool MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors) {
 	}
 
 	// Authenticate for reading
-	MIFARE_Key key = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	MIFARE_Key key = {{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 	enum StatusCode status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, (byte)1, &key, &uid);
 	if (status != STATUS_OK) {
 
