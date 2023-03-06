@@ -424,6 +424,11 @@ bool PCD_PerformSelfTest(void)
 	if (memcmp((void *)result, (void *)reference, 64) != 0)
 		return false;
 
+	// 8. Perform a re-init, because PCD does not work after test.
+	// Reset does not work as expected.
+	// "Auto self-test done" does not work as expected.
+	PCD_Init();
+
 	// Test passed; all is good.
 	return true;
 } // End PCD_PerformSelfTest()
@@ -1755,7 +1760,7 @@ bool MIFARE_OpenUidBackdoor(bool logErrors) {
 	byte validBits = 7; /* Our command is only 7 bits. After receiving card response,
 						  this will contain amount of valid response bits. */
 	byte response[32]; // Card's response is written here
-	byte received;
+	byte received = sizeof(response);
 	enum StatusCode status = PCD_TransceiveData(&cmd, (byte)1, response, &received, &validBits, (byte)0, false); // 40
 	if(status != STATUS_OK) {
 		if(logErrors) {
