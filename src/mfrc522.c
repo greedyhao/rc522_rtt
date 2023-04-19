@@ -9,7 +9,8 @@
 #define MSG_BUF_MAX 	50U
 
 static Uid uid;								// Used by PICC_ReadCardSerial().
-static rt_base_t _chipSelectPin, _resetPowerDownPin;
+static rt_base_t _chipSelectPin = MFRC522_SS_PIN;
+static rt_base_t _resetPowerDownPin = MFRC522_RST_PIN;
 
 static struct rt_spi_device *spi_dev_rc522;     /* SPI 设备句柄 */
 static char *msg;
