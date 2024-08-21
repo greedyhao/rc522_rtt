@@ -1369,18 +1369,18 @@ enum PICC_Type PICC_GetType(byte sak		///< The SAK byte returned from PICC_Selec
 const char *PICC_GetTypeName(enum PICC_Type piccType	///< One of the PICC_Type enums.
 						) {
 	switch (piccType) {
-		case PICC_TYPE_ISO_14443_4:		strncpy(msg, "PICC compliant with ISO/IEC 14443-4", MSG_BUF_MAX);
-		case PICC_TYPE_ISO_18092:		strncpy(msg, "PICC compliant with ISO/IEC 18092 (NFC)", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_MINI:		strncpy(msg, "MIFARE Mini, 320 bytes", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_1K:		strncpy(msg, "MIFARE 1KB", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_4K:		strncpy(msg, "MIFARE 4KB", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_UL:		strncpy(msg, "MIFARE Ultralight or Ultralight C", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_PLUS:		strncpy(msg, "MIFARE Plus", MSG_BUF_MAX);
-		case PICC_TYPE_MIFARE_DESFIRE:	strncpy(msg, "MIFARE DESFire", MSG_BUF_MAX);
-		case PICC_TYPE_TNP3XXX:			strncpy(msg, "MIFARE TNP3XXX", MSG_BUF_MAX);
-		case PICC_TYPE_NOT_COMPLETE:	strncpy(msg, "SAK indicates UID is not complete.", MSG_BUF_MAX);
+		case PICC_TYPE_ISO_14443_4:		strncpy(msg, "PICC compliant with ISO/IEC 14443-4", MSG_BUF_MAX);     break;
+		case PICC_TYPE_ISO_18092:		strncpy(msg, "PICC compliant with ISO/IEC 18092 (NFC)", MSG_BUF_MAX); break;
+		case PICC_TYPE_MIFARE_MINI:		strncpy(msg, "MIFARE Mini, 320 bytes", MSG_BUF_MAX);                  break;
+		case PICC_TYPE_MIFARE_1K:		strncpy(msg, "MIFARE 1KB", MSG_BUF_MAX);                              break;
+		case PICC_TYPE_MIFARE_4K:		strncpy(msg, "MIFARE 4KB", MSG_BUF_MAX);                              break;
+		case PICC_TYPE_MIFARE_UL:		strncpy(msg, "MIFARE Ultralight or Ultralight C", MSG_BUF_MAX);       break;
+		case PICC_TYPE_MIFARE_PLUS:		strncpy(msg, "MIFARE Plus", MSG_BUF_MAX);                             break;
+		case PICC_TYPE_MIFARE_DESFIRE:	strncpy(msg, "MIFARE DESFire", MSG_BUF_MAX);                          break;
+		case PICC_TYPE_TNP3XXX:			strncpy(msg, "MIFARE TNP3XXX", MSG_BUF_MAX);                          break;
+		case PICC_TYPE_NOT_COMPLETE:	strncpy(msg, "SAK indicates UID is not complete.", MSG_BUF_MAX);      break;
 		case PICC_TYPE_UNKNOWN:
-		default:						strncpy(msg, "Unknown type", MSG_BUF_MAX);
+		default:						strncpy(msg, "Unknown type", MSG_BUF_MAX);                            break;
 	}
 	return msg;
 } // End PICC_GetTypeName()
